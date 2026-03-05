@@ -23,15 +23,7 @@ services:
     depends_on:
       - minio
     entrypoint: >
-      /bin/sh -c "
-      sleep 5;
-      mc alias set local http://minio:9000 minio minio123;
-      mc mb -p local/bronze;
-      mc mb -p local/silver;
-      mc mb -p local/gold;
-      mc cp /data/sample_data.csv local/bronze/sample_data.csv;
-      tail -f /dev/null
-      "
+      /bin/sh -c " sleep 5; mc alias set local http://minio:9000 minio minio123; mc mb -p local/bronze; mc mb -p local/silver; mc mb -p local/gold; mc cp /data/sample_data.csv local/bronze/sample_data.csv; tail -f /dev/null "
     volumes:
       - ./data:/data
     restart: unless-stopped
@@ -74,21 +66,18 @@ services:
       - ./spark:/opt/spark
     ports:
       - "8080:8080"
-      - "8091:8091"   # DBT Docs UI
+      - "8091:8091" # DBT Docs UI
     command: >
-      bash -c "
-      airflow db migrate &&
-      airflow users create --role Admin --username admin \
+      bash -c " airflow db migrate && airflow users create --role Admin --username admin \
         --email admin@example.com --firstname Admin \
         --lastname User --password admin &&
-      airflow scheduler & 
-      airflow webserver"
+      airflow scheduler & airflow webserver"
     restart: unless-stopped
     networks:
       - data-net
 
   spark-master:
-    image: bitnami/spark:3.4
+    image: bitnamilegacy/spark:3.4
     hostname: spark-master
     container_name: spark-master
     environment:
@@ -106,7 +95,7 @@ services:
       - data-net
 
   spark-worker-1:
-    image: bitnami/spark:3.4
+    image: bitnamilegacy/spark:3.4
     container_name: spark-worker-1
     environment:
       - SPARK_MODE=worker
@@ -123,7 +112,7 @@ services:
       - data-net
 
   spark-worker-2:
-    image: bitnami/spark:3.4
+    image: bitnamilegacy/spark:3.4
     container_name: spark-worker-2
     environment:
       - SPARK_MODE=worker
@@ -141,7 +130,7 @@ services:
 
   spark-thrift-server:
     build:
-      context: .      # assuming your Dockerfile is here
+      context: . # assuming your Dockerfile is here
       dockerfile: ./spark/Dockerfile
     container_name: spark-thrift-server
     ports:
@@ -178,25 +167,21 @@ services:
     volumes:
       - ./superset:/app/superset
     entrypoint: >
-      /bin/bash -c "
-      superset db upgrade &&
-      if ! superset fab list-users | grep -q 'admin'; then
+      /bin/bash -c " superset db upgrade && if ! superset fab list-users | grep -q 'admin'; then
         superset fab create-admin \
           --username admin \
           --firstname Admin \
           --lastname User \
           --email admin@example.com \
           --password admin;
-      fi &&
-      superset init &&
-      superset run -h 0.0.0.0 -p 8088
-      "
+      fi && superset init && superset run -h 0.0.0.0 -p 8088 "
     restart: unless-stopped
     networks:
       - data-net
 
 volumes:
   minio_data:
+
 
 networks:
   data-net:
